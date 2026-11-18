@@ -1,0 +1,19 @@
+<!--
+  Minimal Ionic application shell for the Milestone 0 frontend foundation.
+  It proves that Angular, Ionic, and routing are wired together. Real Reverie
+  screens are added in later milestones; the router outlet is the place where
+  future feature routes will render.
+-->
+<ion-app>
+  <ion-header>
+    <ion-toolbar>
+      <ion-title>{{ title() }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content class="ion-padding">
+    <h1>Welcome to Reverie</h1>
+    <app-connection-status />
+    <router-outlet />
+  </ion-content>
+</ion-app>

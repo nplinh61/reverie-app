@@ -1,0 +1,82 @@
+# Continuous integration for Reverie (Milestone 0, Phase 8).
+#
+# Verifies the backend and the frontend automatically. The two jobs are
+# independent and run in parallel, so a failure in one is reported separately
+# from the other.
+#
+# Triggers: pull requests targeting main, and pushes to main. Ordinary pushes to
+# feature branches are intentionally not built here, because their pull requests
+# already run this workflow.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Least privilege: the jobs only read the checked out code.
+permissions:
+  contents: read
+
+# A newer run for the same ref cancels an older in-progress run, so only the
+# latest commit of a branch or pull request is verified.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (Java 21, mvnw verify)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # Runs unit tests (Surefire) and the Testcontainers integration tests
+      # (Failsafe). Docker is preinstalled on ubuntu-latest, so the test can
+      # start its own throwaway PostgreSQL 18 container. The Maven wrapper is
+      # invoked through bash so it does not depend on the file execute bit,
+      # which git on Windows does not always preserve.
+      - name: Build and verify
+        run: bash ./mvnw --batch-mode --no-transfer-progress verify
+
+  frontend:
+    name: Frontend (Node 24, test and build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/client
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/client/package-lock.json
+
+      # Installs exactly what the lockfile pins, so CI matches local installs.
+      - name: Install dependencies
+        run: npm ci
+
+      # Single, non-interactive run of the Vitest/jsdom unit tests.
+      - name: Run unit tests
+        run: npm test -- --no-watch --no-progress
+
+      # Production build (angular.json defaults the build to the production
+      # configuration), which also enforces the bundle size budgets.
+      - name: Production build
+        run: npm run build

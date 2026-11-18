@@ -1,0 +1,33 @@
+# PostgreSQL 18 for local Reverie development.
+#
+# Port mapping:
+#   PostgreSQL always listens on 5432 INSIDE the container.
+#   DB_PORT is the HOST-side port (on Windows) that the Spring Boot application
+#   connects to. It is published to the container's fixed internal 5432.
+#
+# Run from the repository root so the single .env is shared with the backend:
+#   docker compose --env-file .env -f infra/docker-compose.yml up -d
+services:
+  db:
+    image: postgres:18
+    container_name: reverie-db
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      # host DB_PORT (default 5432) -> container 5432 (fixed internal port)
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      # PostgreSQL 18 keeps its data in a versioned subdirectory, so mount the
+      # parent /var/lib/postgresql, not /var/lib/postgresql/data.
+      - reverie_pgdata:/var/lib/postgresql
+    healthcheck:
+      # Runs inside the container, so it targets the internal 5432, not DB_PORT.
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  reverie_pgdata:

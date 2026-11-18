@@ -1,0 +1,12 @@
+<div class="connection-status">
+  @if (state() === 'loading') {
+    <ion-spinner name="crescent" aria-label="Checking backend connection"></ion-spinner>
+    <ion-text>Checking backend connection...</ion-text>
+  } @else if (state() === 'connected') {
+    <ion-badge color="success">Connected</ion-badge>
+    <ion-text>The backend API responded with status "ok".</ion-text>
+  } @else {
+    <ion-badge color="danger">Not connected</ion-badge>
+    <ion-text color="danger">Could not reach the backend API.</ion-text>
+  }
+</div>

@@ -1,0 +1,36 @@
+# Reverie backend configuration.
+#
+# Milestone 0, Phase 2 adds the PostgreSQL datasource. Flyway runs automatically
+# because flyway-core is on the classpath; the baseline migration is added in
+# Phase 3. Phase 4 adds the Actuator health exposure and the CORS policy below.
+spring:
+  application:
+    name: reverie-api
+  datasource:
+    # Host-side connection. The app runs natively on Windows and reaches
+    # PostgreSQL through the port Docker publishes on the host (DB_PORT).
+    # PostgreSQL itself always listens on 5432 inside the container.
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:reverie}
+    username: ${DB_USER:reverie}
+    # No default on purpose: startup fails fast if DB_PASSWORD is not supplied
+    # through the environment. The example value lives only in .env.example and
+    # is never committed here.
+    password: ${DB_PASSWORD}
+
+# Expose only the health endpoint over HTTP, and never show its details, so the
+# response is a plain status with no internal information.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+# Explicit browser origins allowed to call /api/v1/**. No wildcard.
+# Change this when the Phase 5 frontend dev server origin is finalized.
+reverie:
+  cors:
+    allowed-origins:
+      - http://localhost:4200
