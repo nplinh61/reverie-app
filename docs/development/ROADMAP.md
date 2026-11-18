@@ -24,8 +24,8 @@ The roadmap may evolve as technical decisions are validated, but changes must be
 
 ### Milestone 0: Project Foundation
 
-Status: Complete. Milestone 0 was merged into `main` through PR #1.
-Backend and frontend checks passed in GitHub Actions CI.
+Status: Complete. Milestone 0 is the initial commit on `main`. Backend and
+frontend checks passed in GitHub Actions CI.
 
 Goal: Establish a reproducible development environment.
 
@@ -248,7 +248,7 @@ A milestone is complete only when:
 
 ## 7. Current Priority
 
-Milestone 0 is complete and merged into `main`.
+Milestone 0 is complete and present on `main` as the initial commit.
 
 The next milestone is Accounts and Spaces (M1). Its architecture
 and security decisions are being finalized before implementation.
