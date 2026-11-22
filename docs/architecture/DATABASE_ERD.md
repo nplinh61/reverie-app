@@ -26,16 +26,23 @@ The MVP uses the following tables:
 
 1. users
 2. profiles
-3. spaces
-4. space_members
-5. invitations
-6. memories
-7. media
-8. songs
-9. memory_songs
-10. stories
-11. comments
-12. reactions
+3. email_verification_tokens
+4. spaces
+5. space_members
+6. invitations
+7. invitation_acceptances
+8. memories
+9. media
+10. songs
+11. memory_songs
+12. stories
+13. comments
+14. reactions
+
+Tables 1 to 7 are implemented in Milestone 1. Tables 8 to 14 belong to Milestone
+2 and later. The section numbers below are historical and are not renumbered when
+a table is inserted; email_verification_tokens appears as 3.1.1 and
+invitation_acceptances as 3.5.1.
 
 ## 3. Table Definitions
 
@@ -48,15 +55,50 @@ Stores authentication and account information.
 | id | UUID | Primary key |
 | email | VARCHAR(255) | NOT NULL, UNIQUE |
 | password_hash | VARCHAR(255) | NOT NULL |
+| email_verified_at | TIMESTAMPTZ | NULL |
 | enabled | BOOLEAN | NOT NULL, DEFAULT TRUE |
 | created_at | TIMESTAMPTZ | NOT NULL |
 | updated_at | TIMESTAMPTZ | NOT NULL |
 
 Rules:
-- Email addresses must be normalized before storage.
-- Passwords must be hashed using a suitable password hashing algorithm.
+- Email addresses are normalized before storage by trimming and lowercasing. The
+  same normalization is applied for login and for email-specific invitation
+  matching. Provider-specific normalization is not implemented. Because stored
+  emails are already normalized, the UNIQUE constraint enforces case-insensitive
+  uniqueness in practice.
+- Passwords must be hashed using a suitable password hashing algorithm. Milestone
+  1 uses BCrypt at cost 12 through a DelegatingPasswordEncoder (see ADR-003).
 - Never store plaintext passwords.
 - Authentication secrets must never be exposed through API responses.
+- enabled means the account is active. It defaults to true, and a new account can
+  authenticate before verifying its email. enabled is not the verification flag.
+- email_verified_at is null until the user verifies their email. It is a separate
+  authorization gate, not an authentication flag. An unverified user cannot
+  participate in protected spaces, membership, or invitations (see ADR-005).
+
+### 3.1.1 email_verification_tokens
+
+Stores single-use tokens for email verification. Added in Milestone 1.
+
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | Primary key |
+| user_id | UUID | NOT NULL, FK users.id |
+| token_hash | VARCHAR(255) | NOT NULL, UNIQUE |
+| expires_at | TIMESTAMPTZ | NOT NULL |
+| consumed_at | TIMESTAMPTZ | NULL |
+| created_at | TIMESTAMPTZ | NOT NULL |
+
+Rules:
+- The raw token is delivered only in the verification email. Only its SHA-256 hash
+  is stored. A fast cryptographic hash is appropriate because the token is high
+  entropy, unlike a password.
+- Tokens are single-use and expire after 24 hours.
+- A resend invalidates prior unconsumed tokens for the same user.
+- Consumption is atomic: a conditional UPDATE sets consumed_at only when the token
+  is unconsumed and unexpired, and the same transaction sets users.email_verified_at
+  (see ADR-005).
+- Tokens must never be returned through API responses or written to logs.
 
 ### 3.2 profiles
 
@@ -66,6 +108,7 @@ Stores user-facing profile information.
 |---|---|---|
 | id | UUID | Primary key |
 | user_id | UUID | NOT NULL, UNIQUE, FK users.id |
+| username | VARCHAR(30) | NOT NULL, UNIQUE (case-insensitive) |
 | display_name | VARCHAR(100) | NOT NULL |
 | bio | VARCHAR(500) | NULL |
 | avatar_media_id | UUID | NULL, FK media.id |
@@ -73,6 +116,15 @@ Stores user-facing profile information.
 | updated_at | TIMESTAMPTZ | NOT NULL |
 
 A user has exactly one profile.
+
+Username rules:
+- Length 3 to 30 characters, lowercase ASCII letters, digits, and underscores.
+- Must contain at least one alphanumeric character. Leading and trailing
+  underscores are acceptable.
+- Uniqueness is case-insensitive, enforced by a unique index on lower(username).
+- The UUID is the permanent internal identifier and the foreign-key target.
+  Username is a mutable attribute, but username changes are deferred beyond
+  Milestone 1 and the username is read-only after registration in Milestone 1.
 
 The backend must verify that any media referenced by avatar_media_id has purpose PROFILE_AVATAR and was uploaded by the same user as the profile.
 
@@ -132,6 +184,10 @@ The database should enforce at most one OWNER per space using an appropriate par
 
 The application must ensure that every space has an OWNER and that ownership changes are transactional.
 
+A space always retains an OWNER. In Milestone 1 an owner cannot leave or remove
+themselves, and ownership transfer is deferred. Member removal must reject
+removing the sole OWNER.
+
 ### 3.5 invitations
 
 Stores invitations to spaces.
@@ -141,31 +197,80 @@ Stores invitations to spaces.
 | id | UUID | Primary key |
 | space_id | UUID | NOT NULL, FK spaces.id |
 | created_by_user_id | UUID | NOT NULL, FK users.id |
-| token_hash | VARCHAR(255) | NOT NULL, UNIQUE |
+| type | VARCHAR(20) | NOT NULL |
 | invited_email | VARCHAR(255) | NULL |
-| status | VARCHAR(20) | NOT NULL |
+| token_hash | VARCHAR(255) | NOT NULL, UNIQUE |
+| max_uses | INTEGER | NOT NULL |
+| uses_consumed | INTEGER | NOT NULL, DEFAULT 0 |
 | expires_at | TIMESTAMPTZ | NOT NULL |
-| accepted_by_user_id | UUID | NULL, FK users.id |
-| created_at | TIMESTAMPTZ | NOT NULL |
-| accepted_at | TIMESTAMPTZ | NULL |
 | revoked_at | TIMESTAMPTZ | NULL |
+| created_at | TIMESTAMPTZ | NOT NULL |
 
-Supported statuses:
-- PENDING
-- ACCEPTED
-- REVOKED
+Supported types:
+- EMAIL: single-use, bound to a specific invited email. max_uses is 1.
+- SHAREABLE: a reusable link with an owner-configured usage limit. Minimum 1,
+  default 10, maximum 50.
 
-Expiration is determined by expires_at.
+Status is derived from stored facts, not stored as a column. Precedence:
+- REVOKED if revoked_at is set
+- EXPIRED if now is past expires_at
+- EXHAUSTED if uses_consumed is at least max_uses
+- otherwise ACTIVE
+
+Database constraints:
+
+```sql
+CONSTRAINT chk_invitation_type_email
+CHECK (
+    (type = 'EMAIL' AND invited_email IS NOT NULL AND max_uses = 1)
+    OR
+    (type = 'SHAREABLE' AND invited_email IS NULL AND max_uses BETWEEN 1 AND 50)
+)
+CONSTRAINT chk_invitation_uses
+CHECK (uses_consumed >= 0 AND uses_consumed <= max_uses)
+```
 
 Rules:
-- Store only a hash of the invitation token.
-- Generate unguessable tokens.
-- Invitations can be revoked.
-- Expired and revoked invitations cannot be accepted.
-- Accepting an invitation creates a space_members record.
-- Invitation acceptance must be transactional.
-- Only the current OWNER of a space may create or revoke invitations for that space.
-- Space membership alone does not grant invitation-management permissions; a non-OWNER member cannot create, list, or revoke invitations.
+- Store only a SHA-256 hash of the invitation token. Generate unguessable tokens
+  with a cryptographically secure random generator.
+- Invitation terms are immutable after creation. To change them the owner revokes
+  and recreates.
+- Invitations can be revoked. Revocation blocks future use but does not remove
+  existing members.
+- Expired, revoked, exhausted, or already-consumed invitations cannot grant
+  membership.
+- Accepting an invitation creates a space_members record and consumes one use,
+  atomically, in a single transaction (see ADR-004).
+- An existing member who accepts again consumes no use and creates no duplicate
+  membership.
+- Only the current OWNER of a space may create, list, or revoke invitations for
+  that space. Space membership alone does not grant invitation-management
+  permissions.
+- Unavailable tokens return a uniform response that does not reveal whether the
+  token was unknown, expired, revoked, or exhausted.
+
+### 3.5.1 invitation_acceptances
+
+Records each acceptance of an invitation. Added in Milestone 1. Supports the usage
+limit and per-user uniqueness for reusable links.
+
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | Primary key |
+| invitation_id | UUID | NOT NULL, FK invitations.id |
+| user_id | UUID | NOT NULL, FK users.id |
+| space_member_id | UUID | NOT NULL, FK space_members.id |
+| accepted_at | TIMESTAMPTZ | NOT NULL |
+
+Constraints:
+- UNIQUE(invitation_id, user_id)
+
+Rules:
+- An acceptance row exists only when that acceptance actually created the
+  membership.
+- Acceptance uses INSERT ... ON CONFLICT DO NOTHING and conditional SQL rather
+  than catching unique-constraint violations, so the transaction is never aborted
+  by a constraint error (see ADR-004).
 
 ### 3.6 memories
 
@@ -349,9 +454,11 @@ Rules:
 ## 4. Important Relationships
 
 - users 1:1 profiles
+- users 1:N email_verification_tokens
 - users 1:N spaces (creator relationship)
 - users N:M spaces through space_members
 - spaces 1:N invitations
+- invitations 1:N invitation_acceptances
 - spaces 1:N memories
 - users 1:N memories (creator relationship)
 - memories 1:N media
@@ -366,9 +473,11 @@ Rules:
 Recommended indexes:
 
 - users(email)
+- profiles unique index on lower(username)
+- email_verification_tokens(user_id)
 - space_members(user_id, space_id)
 - invitations(token_hash)
-- invitations(space_id, status)
+- invitations(space_id)
 - memories(space_id, event_date)
 - memories(created_by_user_id)
 - media(memory_id)
@@ -380,8 +489,13 @@ Recommended indexes:
 
 Add database constraints for:
 - Unique email addresses.
+- Unique username, case-insensitive, through a unique index on lower(username).
+- At most one OWNER per space, through a partial unique index.
 - Unique space membership.
 - Unique invitation token hashes.
+- Unique acceptance per user per invitation.
+- Valid invitation type with its invited_email and max_uses combination, and a
+  uses_consumed range within max_uses.
 - Unique song association per memory.
 - Unique reaction per user and memory.
 - Valid enum-like values.
@@ -441,7 +555,8 @@ point to a table created in a later migration using ALTER TABLE in (or after) th
 migration that creates the referenced table. This avoids impossible forward references,
 such as profiles.avatar_media_id pointing at media.id (see section 3.2).
 
-Example (names and boundaries are illustrative and will change during implementation):
+The Milestone 1 sequence is fixed below. Names and boundaries beyond Milestone 1
+remain illustrative and will change during implementation.
 
 ```text
 apps/api/src/main/resources/db/migration/
@@ -449,14 +564,18 @@ apps/api/src/main/resources/db/migration/
 # Milestone 0 (foundation): the only migration shipped in this milestone
 ├── V1__baseline.sql                      (enable UUID extension / sanity object; no domain tables)
 
-# Milestone 1 and later (domain tables): added milestone by milestone
-├── V2__create_users_and_profiles.sql     (profiles.avatar_media_id has no FK yet)
-├── V3__create_spaces_and_memberships.sql
-├── V4__create_invitations.sql
-├── V5__create_memories_and_media.sql      (adds the profiles.avatar_media_id FK via ALTER TABLE)
-├── V6__create_songs_and_memory_songs.sql
-├── V7__create_stories.sql
-└── V8__create_comments_and_reactions.sql
+# Milestone 1 (accounts and spaces)
+├── V2__create_users.sql
+├── V3__create_profiles.sql               (unique index on lower(username); avatar_media_id nullable, no FK yet)
+├── V4__create_email_verification_tokens.sql
+├── V5__create_spaces.sql
+├── V6__create_space_members.sql          (UNIQUE(space_id,user_id); partial unique OWNER index)
+├── V7__create_invitations.sql            (type, max_uses, uses_consumed, token_hash unique, CHECK constraints)
+├── V8__create_invitation_acceptances.sql (UNIQUE(invitation_id,user_id))
+
+# Milestone 2 and later (domain tables): added milestone by milestone
+├── V9__create_memories_and_media.sql     (adds the profiles.avatar_media_id FK via ALTER TABLE)
+├── ...
 ```
 
 Migration names and boundaries beyond V1 may change during implementation.
@@ -468,10 +587,13 @@ Never modify an already-applied migration in a shared or persistent environment.
 These questions must be resolved before the corresponding features are implemented:
 
 1. Can multiple people edit a shared memory?
-2. Can a space owner transfer ownership?
+2. Can a space owner transfer ownership? Deferred beyond Milestone 1. In Milestone
+   1 the owner is fixed and cannot leave or remove themselves.
 3. Should memories support soft deletion?
 4. Should stories have their own visibility setting?
 5. Should invitations be email-specific or shareable by anyone with the link?
+   Resolved: both. Milestone 1 supports EMAIL (single-use) and SHAREABLE
+   (usage-limited reusable) invitations (see section 3.5 and ADR-004).
 6. What should happen to shared content when a user deletes their account?
 
 Do not silently invent policies for these cases.

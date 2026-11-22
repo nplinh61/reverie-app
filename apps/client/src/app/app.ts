@@ -1,5 +1,5 @@
 import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import {
   IonApp,
   IonContent,
@@ -12,6 +12,7 @@ import { ConnectionStatus } from './features/health/connection-status';
 @Component({
   imports: [
     RouterOutlet,
+    RouterLink,
     IonApp,
     IonHeader,
     IonToolbar,

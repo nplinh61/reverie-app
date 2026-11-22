@@ -91,18 +91,20 @@ The following are actually on the backend classpath today:
 Milestone 0 deliberately uses plain Spring JDBC. There is no ORM, no
 repository layer, and no domain tables yet.
 
-#### Not yet implemented
+#### Decided for Milestone 1, not yet in the Milestone 0 build
 
-The following are referenced by later milestones but are not present in the
-Milestone 0 build:
+The following are chosen for Milestone 1 and will be added when Milestone 1
+implementation is approved. They are not present in the Milestone 0 build.
 
-- Spring Security. Authentication and authorization are deferred to Milestone 1.
-- Bean Validation. Request validation is added when the first write endpoints
-  arrive.
-- Any object-relational mapping technology. The approach for domain persistence
-  in Milestone 1 (for example plain JDBC, Spring Data JDBC, or Spring Data
-  JPA/Hibernate) is undecided and must be chosen explicitly before Milestone 1
-  implementation begins. This document does not commit to any of them.
+- Spring Data JDBC for domain persistence, with small aggregate roots and explicit
+  SQL for complex queries (see ADR-002).
+- Spring Security with server-managed cookie sessions for authentication and
+  authorization (see ADR-003).
+- Jakarta Bean Validation for request validation.
+- Spring Boot Mail with Mailpit for local email verification, behind an EmailSender
+  port (see ADR-005).
+- Bucket4j for in-memory rate limiting.
+- No object-relational mapping technology such as JPA or Hibernate is used.
 
 Responsibilities (target for the full backend, reached incrementally):
 - Authentication and authorization.
@@ -280,19 +282,20 @@ API documentation should be maintained using OpenAPI.
 
 Use Spring Security.
 
-The exact authentication mechanism must be evaluated and decided immediately before
-Milestone 1. It is intentionally deferred so it does not block Milestone 0 scaffolding.
+The authentication mechanism is decided for Milestone 1 (see ADR-003):
+server-managed cookie sessions, stored in memory for the single-instance
+deployment. The design addresses:
+- Secure password hashing with BCrypt at cost 12 through a DelegatingPasswordEncoder.
+- A session-scoped JSESSIONID cookie with HttpOnly, SameSite=Lax, and Secure in
+  production, and a two-hour inactivity timeout.
+- CSRF protection with a cookie token echoed as an X-XSRF-TOKEN header, with
+  explicit initialization and refresh around login and logout.
+- Same-origin deployment, so the browser uses first-party cookies and relative
+  URLs; cross-origin credentialed requests are not on the normal path.
+- Logout that invalidates the server session and clears cookies.
 
-The initial design should consider:
-- Secure password hashing.
-- Short-lived access credentials.
-- Secure refresh or session handling.
-- CSRF protection where applicable.
-- Secure cookie settings for browser clients.
-- Secure token storage for mobile clients.
-- Logout and credential revocation.
-
-Do not store sensitive authentication tokens in browser localStorage by default.
+Native mobile credential handling is re-verified in Milestone 7. Sensitive
+authentication tokens are not stored in browser localStorage.
 
 ## 9. Database Design Principles
 
@@ -377,11 +380,14 @@ Changes to these decisions require an explicit discussion of alternatives and tr
 
 The following must be evaluated before their implementation:
 
-- Exact authentication and session strategy.
 - Object storage provider.
 - Production hosting provider.
-- Email delivery provider.
+- Production email delivery provider. Local development uses Mailpit behind an
+  EmailSender port (see ADR-005); only the production provider is deferred.
 - Backup and disaster recovery strategy.
 - Public profile and discovery infrastructure.
+
+The authentication and session strategy and the domain persistence approach are no
+longer deferred; they are decided for Milestone 1 (see ADR-002 and ADR-003).
 
 Do not introduce infrastructure for deferred features prematurely.

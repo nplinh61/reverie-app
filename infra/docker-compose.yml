@@ -29,5 +29,24 @@ services:
       timeout: 5s
       retries: 10
 
+  # Mailpit: a local SMTP sink for email verification during development (ADR-005).
+  # It accepts mail on 1025 and never forwards it anywhere. Open the web UI on
+  # http://localhost:8025 to read the verification emails the backend sends.
+  # No production provider is configured here; that choice is deferred.
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: reverie-mailpit
+    ports:
+      # host MAIL_PORT (default 1025) -> container 1025 (SMTP)
+      - "${MAIL_PORT:-1025}:1025"
+      # host MAILPIT_UI_PORT (default 8025) -> container 8025 (web UI)
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+    healthcheck:
+      # Mailpit ships a tiny health command used for container orchestration.
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   reverie_pgdata:

@@ -49,23 +49,33 @@ Acceptance criteria:
 
 Goal: Allow two users to create an account and collaborate in a shared space.
 
-Prerequisite: the authentication and session strategy must be decided before this
-milestone begins (it is intentionally deferred during Milestone 0).
+Prerequisite: the authentication and session strategy and the domain persistence
+approach are decided (see ADR-002 and ADR-003). The full set of Milestone 1
+decisions is recorded in ADR-002 through ADR-005 and the architecture documents.
 
 Planned work:
-- Implement user registration and login.
-- Implement authentication and logout.
-- Implement basic user profiles.
-- Implement spaces and membership.
-- Implement space membership and roles.
-- Implement invitation creation, revocation, and acceptance.
-- Enforce backend authorization rules.
-- Add integration and security tests.
+- Implement user registration with email, password, display name, and a unique
+  username. Protect email existence with a neutral response; report a username
+  conflict as a clear field-level validation error.
+- Implement mandatory email verification and resend, with Mailpit for local
+  development.
+- Implement login, logout, and current-user with cookie sessions and CSRF.
+- Implement basic user profiles (display name and optional bio; username read-only
+  in Milestone 1).
+- Implement spaces, membership, and the OWNER and MEMBER roles.
+- Implement invitation creation (EMAIL single-use and SHAREABLE usage-limited),
+  listing, preview, revocation, and concurrency-safe acceptance.
+- Enforce backend authorization rules, including the 401, 403, and 404 policy and
+  rate limiting.
+- Provide minimal responsive web screens for the flows above, including mobile
+  Safari, without the full visual design and without native Capacitor builds.
+- Add integration, security, and concurrency tests.
 
 Acceptance criteria:
-- User A can register and log in.
-- User A can create a space.
-- User A can invite User B.
+- User A can register, verify their email, and log in.
+- An unverified user cannot participate in protected spaces.
+- User A can create a space and is its OWNER.
+- User A can invite User B by email or by a shareable link.
 - User B can accept the invitation.
 - Both users can access the space.
 - An unauthorized user cannot access the space.
@@ -250,5 +260,18 @@ A milestone is complete only when:
 
 Milestone 0 is complete and present on `main` as the initial commit.
 
-The next milestone is Accounts and Spaces (M1). Its architecture
-and security decisions are being finalized before implementation.
+The next milestone is Accounts and Spaces (M1). Its architecture and security
+decisions are finalized and recorded in ADR-002 through ADR-005 and the
+architecture documents. The first M1 feature, user registration with email
+verification, is implemented.
+
+## 8. Non-blocking Follow-ups
+
+These are tracked improvements that do not block the current milestone:
+
+- The Angular initial bundle exceeds the default 500 kB budget by roughly 72 kB
+  after adding `@angular/forms` for the registration screens. The production
+  build still succeeds; this is a warning only. The bundle budget is
+  intentionally left unchanged. Revisit when the frontend grows, for example with
+  route-level lazy loading or a deliberately reasoned budget adjustment, rather
+  than raising the budget just to silence the warning.

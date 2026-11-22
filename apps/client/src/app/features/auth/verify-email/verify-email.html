@@ -1,0 +1,23 @@
+<div class="auth-page">
+  <section class="auth-card" aria-live="polite">
+    @if (state() === 'verifying') {
+      <h1>Verifying your email...</h1>
+      <p>Please wait while we confirm your verification link.</p>
+    } @else if (state() === 'success') {
+      <h1>Email verified</h1>
+      <p class="status-ok">{{ message() }}</p>
+      <a routerLink="/">Back to home</a>
+    } @else if (state() === 'missing') {
+      <h1>Missing verification token</h1>
+      <p class="status-error">
+        This link is incomplete. Please open the verification link directly from
+        your email.
+      </p>
+      <a routerLink="/register">Back to sign up</a>
+    } @else {
+      <h1>Verification failed</h1>
+      <p class="status-error">{{ message() }}</p>
+      <a routerLink="/register">Back to sign up</a>
+    }
+  </section>
+</div>

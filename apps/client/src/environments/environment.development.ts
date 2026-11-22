@@ -1,8 +1,10 @@
 // Development environment.
 //
-// The backend runs natively on the Windows host on its default port 8080, while
-// the Angular dev server runs on http://localhost:4200. Calls therefore cross
-// origins and exercise the backend CORS allowlist on purpose.
+// apiBaseUrl is empty so the frontend issues relative "/api/**" requests. The
+// Angular dev server proxies those to the backend (see proxy.conf.mjs), which
+// makes all browser traffic same-origin on http://localhost:4200. This is what
+// lets cookie sessions and CSRF work in later milestones without CORS or
+// cross-origin credentials.
 export const environment = {
-  apiBaseUrl: 'http://localhost:8080',
+  apiBaseUrl: '',
 };
