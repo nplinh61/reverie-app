@@ -260,16 +260,43 @@ A milestone is complete only when:
 
 Milestone 0 is complete and present on `main` as the initial commit.
 
-The next milestone is Accounts and Spaces (M1). Its architecture and security
+Milestone 1 (Accounts and Spaces) is in progress. Its architecture and security
 decisions are finalized and recorded in ADR-002 through ADR-005 and the
-architecture documents. The first M1 feature, user registration with email
-verification, is implemented.
+architecture documents.
+
+Complete and verified in Milestone 1:
+- User registration with email, password, display name, and a unique username.
+- Persistent user and profile data (Spring Data JDBC with Flyway migrations).
+- Input validation and duplicate detection: a neutral response protects email
+  existence, and a taken username is reported as a field-level error.
+- Mandatory email verification and public resend, with Mailpit for local
+  development.
+- Registration and resend rate limiting.
+- CSRF protection with project-specific names (REVERIE-XSRF-TOKEN and
+  X-REVERIE-XSRF-TOKEN) and a REVERIE-SESSION session cookie.
+- The Rose-Tinted Dusk registration and email-verification UI, with responsive
+  desktop, tablet, and mobile layouts and optimized WebP imagery.
+
+Still planned for Milestone 1 and not yet implemented:
+- Login, logout, and current-user with cookie sessions.
+- Authenticated session handling and protected routes.
+- Profile management beyond registration.
+- Spaces, membership, roles, and invitations.
+- The full backend authorization policy across those flows.
+
+Milestone 1 is therefore not complete.
+
+Latest verification baseline:
+- Backend: 41 unit tests and 28 integration tests pass; `mvnw verify` succeeds.
+- Frontend: 29 tests pass; `npm run build` succeeds.
+- One known non-blocking warning: the Angular initial bundle exceeds the default
+  500 kB budget by about 63 kB (see section 8).
 
 ## 8. Non-blocking Follow-ups
 
 These are tracked improvements that do not block the current milestone:
 
-- The Angular initial bundle exceeds the default 500 kB budget by roughly 72 kB
+- The Angular initial bundle exceeds the default 500 kB budget by about 63 kB
   after adding `@angular/forms` for the registration screens. The production
   build still succeeds; this is a warning only. The bundle budget is
   intentionally left unchanged. Revisit when the frontend grows, for example with

@@ -225,12 +225,12 @@ module/
 └── exception/
 ```
 
-This is a target layout, not the current state. Milestone 0 contains only a
-small `config` package and a single `web` controller. The `repository/` and
-`entity/` folders, and the "Repository Layer" shown in the high-level diagram,
-appear when domain persistence is introduced in Milestone 1. The shape of the
-`repository/` and `entity/` layers depends on the persistence approach chosen
-for Milestone 1, which is still undecided.
+This is a target layout, not a literal one. Milestone 0 contained only a small
+`config` package and a single `web` controller. Milestone 1 introduced the first
+domain persistence in an `account` package (users, profiles, and email
+verification tokens) using Spring Data JDBC (ADR-002); the `repository/` and
+`entity/` names above are indicative, because the implementation uses aggregate
+roots rather than JPA entities. Later domains follow the same approach.
 
 Do not create empty abstractions or unnecessary layers. Introduce structures when they provide a clear benefit.
 
