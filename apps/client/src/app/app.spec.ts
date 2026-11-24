@@ -1,20 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
 import { App } from './app';
-import { HealthService } from './core/health/health.service';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [
-        provideRouter([]),
-        // Stub the health service so the shell test stays focused on the shell
-        // and never makes a real HTTP request. HTTP behavior is covered by
-        // health.service.spec.ts and connection-status.spec.ts.
-        { provide: HealthService, useValue: { ping: () => of({ status: 'ok' }) } },
-      ],
+      providers: [provideRouter([])],
     }).compileComponents();
   });
 
@@ -23,12 +15,12 @@ describe('App', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render the welcome heading', () => {
+  it('is a minimal shell that only hosts the router outlet', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain(
-      'Welcome to Reverie',
-    );
+    // The developer-only connection-status scaffold was removed from the shell.
+    expect(compiled.querySelector('app-connection-status')).toBeNull();
+    expect(compiled.querySelector('router-outlet')).not.toBeNull();
   });
 });

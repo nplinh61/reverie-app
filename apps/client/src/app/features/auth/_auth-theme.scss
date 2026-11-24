@@ -1,0 +1,403 @@
+/*
+ * Rose-Tinted Dusk - shared authentication theme.
+ *
+ * This partial is imported once from the global styles.scss, so the shared
+ * classes below are emitted a single time instead of being duplicated into
+ * every component style bundle. That also keeps each component stylesheet well
+ * under the 4 kB per-component budget. Everything here is namespaced with the
+ * "auth-" prefix so it cannot clash with the rest of the app.
+ *
+ * Colors are written as explicit literals, not Ionic theme variables, so the
+ * system dark palette (theme/variables.css imports dark.system.css) can never
+ * repaint these screens. The auth experience is always the light rose theme.
+ *
+ * Fonts are self-hosted WOFF2 (see public/fonts and the per-family OFL license
+ * files). Playfair Display is for headings, Caveat for decorative handwriting
+ * only, and functional text uses the system sans-serif stack.
+ *
+ * Contrast: every text/background pair below was checked for WCAG 2.1 AA.
+ *   plum (#6E536F) and soft (#7B5E7C) text pass AA on mist, blush and white.
+ *   The light mauve (#AC8BAC) fails as text on light backgrounds, so it is used
+ *   only for decoration. Primary buttons use a darkened mauve (#8A5F84) with
+ *   white text (ratio 5.18). Error and success colors pass AA as well.
+ */
+
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/playfair-display-latin-700-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/playfair-display-latin-700-italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Caveat';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/caveat-latin-400-normal.woff2') format('woff2');
+}
+
+:root {
+  /* Rose-Tinted Dusk palette (approved). */
+  --rev-mist: #fff3f2;
+  --rev-blush: #f1d5e5;
+  --rev-orchid: #d9b4d4;
+  --rev-mauve: #ac8bac;
+  --rev-plum: #6e536f;
+
+  /* Derived shades, kept inside the palette family, chosen for AA contrast. */
+  --rev-mauve-deep: #8a5f84; /* primary button fill, white text passes AA */
+  --rev-plum-deep: #5a425c; /* button hover/active */
+  --rev-text: #6e536f; /* primary text */
+  --rev-text-soft: #7b5e7c; /* secondary text, still AA on light */
+  --rev-danger: #b00020;
+  --rev-success: #2e7d32;
+
+  --rev-font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --rev-font-hand: 'Caveat', 'Segoe Script', cursive;
+  --rev-font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+
+  --rev-radius-card: 1.5rem;
+  --rev-radius-field: 0.85rem;
+  --rev-shadow-card: 0 1.5rem 3rem rgba(110, 83, 111, 0.18);
+  --rev-shadow-polaroid: 0 0.9rem 1.8rem rgba(110, 83, 111, 0.28);
+}
+
+/* Full-viewport dreamy lavender-pink backdrop shared by every auth screen. */
+.auth-surface {
+  min-height: 100dvh;
+  display: flex;
+  color: var(--rev-text);
+  font-family: var(--rev-font-sans);
+  background:
+    radial-gradient(
+      120% 90% at 15% 10%,
+      rgba(255, 243, 242, 0.95) 0%,
+      rgba(241, 213, 229, 0.9) 45%,
+      rgba(217, 180, 212, 0.95) 100%
+    );
+}
+
+/* Centered card used by the verification screens and the check-email view. */
+.auth-card {
+  width: 100%;
+  max-width: 30rem;
+  margin: auto;
+  padding: 2.5rem 2rem;
+  background: rgba(255, 243, 242, 0.92);
+  border: 1px solid rgba(217, 180, 212, 0.6);
+  border-radius: var(--rev-radius-card);
+  box-shadow: var(--rev-shadow-card);
+  text-align: center;
+}
+
+.auth-title {
+  margin: 0 0 0.5rem;
+  font-family: var(--rev-font-serif);
+  font-weight: 700;
+  font-style: italic;
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  line-height: 1.1;
+  color: var(--rev-plum);
+}
+
+.auth-subtitle {
+  margin: 0 0 1.75rem;
+  font-size: 1.02rem;
+  line-height: 1.5;
+  color: var(--rev-text-soft);
+}
+
+/* Form building blocks. */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  text-align: left;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.auth-label {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--rev-plum);
+}
+
+.auth-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* The explicit colors here also guard against the global dark-mode input rule
+ * in styles.scss repainting these fields white-on-dark. */
+.auth-input {
+  width: 100%;
+  padding: 0.8rem 0.95rem;
+  font-size: 1rem;
+  font-family: var(--rev-font-sans);
+  color: var(--rev-text);
+  background: #fffafb;
+  border: 1.5px solid var(--rev-orchid);
+  border-radius: var(--rev-radius-field);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-input::placeholder {
+  color: var(--rev-mauve-deep);
+  opacity: 1;
+}
+
+.auth-input:focus,
+.auth-input:focus-visible {
+  outline: none;
+  border-color: var(--rev-mauve-deep);
+  box-shadow: 0 0 0 3px rgba(138, 95, 132, 0.3);
+}
+
+/* A field with a trailing icon button (password reveal) needs room on the end. */
+.auth-input--with-affix {
+  padding-right: 3rem;
+}
+
+.auth-affix-btn {
+  position: absolute;
+  right: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  color: var(--rev-plum);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.auth-affix-btn:focus-visible {
+  outline: 2px solid var(--rev-mauve-deep);
+  outline-offset: 1px;
+}
+
+/* Primary action: solid dusty mauve, white label (AA). */
+.auth-btn-primary {
+  margin-top: 0.5rem;
+  padding: 0.85rem 1rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-family: var(--rev-font-serif);
+  color: #fff;
+  background: var(--rev-mauve-deep);
+  border: none;
+  border-radius: var(--rev-radius-field);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.auth-btn-primary:hover:not(:disabled) {
+  background: var(--rev-plum);
+}
+
+.auth-btn-primary:active:not(:disabled) {
+  background: var(--rev-plum-deep);
+  transform: translateY(1px);
+}
+
+.auth-btn-primary:focus-visible {
+  outline: 2px solid var(--rev-plum-deep);
+  outline-offset: 2px;
+}
+
+.auth-btn-primary:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+/* Secondary action: outlined, used for resend. */
+.auth-btn-secondary {
+  margin-top: 1rem;
+  padding: 0.7rem 1.1rem;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--rev-plum);
+  background: transparent;
+  border: 1.5px solid var(--rev-mauve-deep);
+  border-radius: var(--rev-radius-field);
+  cursor: pointer;
+}
+
+.auth-btn-secondary:hover:not(:disabled) {
+  background: rgba(138, 95, 132, 0.1);
+}
+
+.auth-btn-secondary:focus-visible {
+  outline: 2px solid var(--rev-mauve-deep);
+  outline-offset: 2px;
+}
+
+.auth-btn-secondary:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+/* Inline link rendered inside auth copy. */
+.auth-link {
+  color: var(--rev-plum);
+  font-weight: 600;
+}
+
+/* Subtle secondary navigation back to the registration screen. Shared by the
+ * check-email view (a <button> that resets the view) and the verification
+ * screens (an <a routerLink>). The button-reset properties keep both elements
+ * visually identical. Not a login link. */
+.auth-back {
+  display: inline-block;
+  margin-top: 1.5rem;
+  padding: 0;
+  color: var(--rev-plum);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.auth-back:hover {
+  text-decoration: underline;
+}
+
+.auth-back:focus-visible {
+  outline: 2px solid var(--rev-mauve-deep);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+.auth-hint {
+  font-size: 0.85rem;
+  color: var(--rev-text-soft);
+}
+
+.auth-status-error {
+  color: var(--rev-danger);
+  font-size: 0.88rem;
+}
+
+.auth-status-ok {
+  color: var(--rev-success);
+  font-size: 0.95rem;
+}
+
+/* Handwritten decorative accent. Never used for labels, buttons, or errors. */
+.auth-hand {
+  font-family: var(--rev-font-hand);
+  color: var(--rev-plum);
+}
+
+/* Simple poetic lead paragraph for the verification cards. */
+.auth-lead {
+  margin: 0 0 1.25rem;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--rev-text);
+}
+
+.auth-footnote {
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--rev-text-soft);
+}
+
+/*
+ * Decorative polaroids and doodles used by the registration story panel and
+ * banner. These are the shared presentational pieces (frame, photo slot,
+ * gradient placeholders, caption, washi tape). The registration stylesheet only
+ * positions and sizes them per layout. Keeping them here emits them once and
+ * keeps that component stylesheet within its budget.
+ */
+.polaroid {
+  position: relative;
+  width: 11rem;
+  margin: 0;
+  padding: 0.6rem 0.6rem 0;
+  background: #fffdfb;
+  border-radius: 0.3rem;
+  box-shadow: var(--rev-shadow-polaroid);
+  transform: rotate(var(--rot, 0deg));
+}
+
+.polaroid__photo {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 0.15rem;
+}
+
+/* Real photograph, shown only when a file name is supplied. It fills the frame
+ * and is cropped with object-fit so varied source photos keep the layout. */
+.polaroid__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Polished gradient placeholders standing in for licensed photographs; see
+ * public/auth/polaroids/README.md. No image file is referenced while a slot is
+ * empty, so there is no broken-image icon and no failed request. */
+.polaroid__photo--sunset {
+  background: linear-gradient(160deg, #ffc38a 0%, #e98aa6 48%, #9a7bb8 100%);
+}
+
+.polaroid__photo--bloom {
+  background: linear-gradient(160deg, #d3e4b4 0%, #f3ead4 55%, #e6c7a6 100%);
+}
+
+.polaroid__photo--stage {
+  background: linear-gradient(165deg, #5a3f8c 0%, #b65fa6 55%, #f0a6c0 100%);
+}
+
+.polaroid__caption {
+  padding: 0.35rem 0.2rem 0.55rem;
+  font-family: var(--rev-font-hand);
+  font-size: 1.25rem;
+  line-height: 1.1;
+  color: var(--rev-plum);
+  text-align: center;
+}
+
+.polaroid__tape {
+  position: absolute;
+  top: -0.7rem;
+  left: 50%;
+  width: 3.2rem;
+  height: 1.3rem;
+  transform: translateX(-50%) rotate(-4deg);
+  background: rgba(217, 180, 212, 0.55);
+  border: 1px solid rgba(172, 139, 172, 0.35);
+}
+
+.doodle {
+  user-select: none;
+  pointer-events: none;
+}

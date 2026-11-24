@@ -1,24 +1,9 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import {
-  IonApp,
-  IonContent,
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/angular';
-import { ConnectionStatus } from './features/health/connection-status';
+import { IonApp, IonContent } from '@ionic/angular';
 
 @Component({
-  imports: [
-    RouterOutlet,
-    IonApp,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonContent,
-    ConnectionStatus,
-  ],
+  imports: [RouterOutlet, IonApp, IonContent],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',

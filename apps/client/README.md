@@ -27,7 +27,7 @@ Run from this directory (`apps/client`):
 npm start
 ```
 
-This runs `ng serve`. Open `http://localhost:4200/`. The app reloads when you
+This runs `ng serve`. Open `http://localhost:4201/`. The app reloads when you
 change source files. To see the connection status as "connected", the backend
 must also be running; see the repository root README and `apps/api/README.md`.
 
@@ -36,10 +36,10 @@ must also be running; see the repository root README and `apps/api/README.md`.
 The client talks to the Reverie backend through a single base URL defined in the
 Angular environment files:
 
-- `src/environments/environment.development.ts` sets `apiBaseUrl` to
-  `http://localhost:8080`, the backend's default port during local development.
-  Because the dev server runs on `http://localhost:4200`, API calls cross origins
-  and exercise the backend CORS allowlist on purpose.
+- `src/environments/environment.development.ts` leaves `apiBaseUrl` empty. Use
+  the development server at `http://localhost:4201`. It forwards relative `/api/**`
+  requests to Spring Boot on `http://127.0.0.1:8080`, so sessions and CSRF
+  work through the same browser origin.
 - `src/environments/environment.ts` (used by production builds) sets `apiBaseUrl`
   to an empty string. An empty value means the client expects the API at the
   **same origin**, served behind a reverse proxy that routes `/api/**` to the

@@ -1,0 +1,30 @@
+/* Layout only; the card, palette and fonts come from the shared auth theme. */
+.auth-lead.status-success {
+  color: var(--rev-success);
+}
+
+.auth-lead.status-error {
+  color: var(--rev-danger);
+}
+
+.verify-spinner {
+  display: inline-block;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 3px solid var(--rev-orchid);
+  border-top-color: var(--rev-mauve-deep);
+  border-radius: 50%;
+  animation: verify-spin 0.9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .verify-spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+@keyframes verify-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

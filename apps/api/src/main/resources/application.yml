@@ -3,6 +3,15 @@
 # Milestone 0, Phase 2 adds the PostgreSQL datasource. Flyway runs automatically
 # because flyway-core is on the classpath; the baseline migration is added in
 # Phase 3. Phase 4 adds the Actuator health exposure and the CORS policy below.
+server:
+  port: 8080
+  servlet:
+    session:
+      cookie:
+        name: REVERIE-SESSION
+        http-only: true
+        same-site: lax
+
 spring:
   application:
     name: reverie-api
@@ -10,12 +19,26 @@ spring:
     # Host-side connection. The app runs natively on Windows and reaches
     # PostgreSQL through the port Docker publishes on the host (DB_PORT).
     # PostgreSQL itself always listens on 5432 inside the container.
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:reverie}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:reverie}
     username: ${DB_USER:reverie}
     # No default on purpose: startup fails fast if DB_PASSWORD is not supplied
     # through the environment. The example value lives only in .env.example and
     # is never committed here.
     password: ${DB_PASSWORD}
+  # Outgoing email for verification (ADR-005). Local development points at the
+  # Mailpit container (SMTP on 1025, no authentication, no TLS). A production
+  # provider overrides these values through the environment and adds credentials.
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS:false}
 
 # Expose only the health endpoint over HTTP, and never show its details, so the
 # response is a plain status with no internal information.
@@ -27,10 +50,43 @@ management:
   endpoint:
     health:
       show-details: never
+  health:
+    # Do not let SMTP reachability affect liveness. Adding spring-boot-starter-mail
+    # registers a mail health contributor that opens an SMTP connection; a down or
+    # absent mail server (including during tests, and the deferred production
+    # provider) would otherwise flip the whole health endpoint to DOWN.
+    mail:
+      enabled: false
 
 # Explicit browser origins allowed to call /api/v1/**. No wildcard.
 # Change this when the Phase 5 frontend dev server origin is finalized.
 reverie:
   cors:
     allowed-origins:
-      - http://localhost:4200
+      - http://localhost:4201
+  # Email verification settings (ADR-005). from-address is the sender shown on
+  # verification and account-notice emails. base-url is the public origin the
+  # browser uses; the verification link is built as {base-url}/verify-email?token=...
+  # and must point at the frontend, which then calls the backend verify endpoint.
+  mail:
+    from-address: ${MAIL_FROM:no-reply@reverie.local}
+    from-name: ${MAIL_FROM_NAME:Reverie}
+  verification:
+    base-url: ${APP_BASE_URL:http://localhost:4201}
+    # How long a verification token stays valid, and the smallest gap between two
+    # verification emails to the same account (the persistent resend cooldown).
+    token-validity: 24h
+    resend-cooldown: 60s
+  # Minimal in-memory abuse protection for the registration and resend endpoints
+  # (single instance, resets on restart; revisit before public deployment).
+  # Each limit is "<max> requests per <window>" keyed by the named dimension.
+  rate-limit:
+    register-per-ip:
+      max: 5
+      window: 10m
+    resend-per-ip:
+      max: 10
+      window: 1h
+    resend-per-email:
+      max: 3
+      window: 1h

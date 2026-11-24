@@ -7,10 +7,12 @@ Build a usable first version of Reverie that allows individuals and small groups
 
 ## Must Have (P0)
 
-- User registration and authentication.
+- User registration and authentication, including a unique username and mandatory
+  email verification.
 - User profiles.
 - Create and manage spaces (used personally or shared with invited members).
-- Invite users through invitation links.
+- Invite users through email-specific single-use invitations and reusable
+  shareable links with a usage limit.
 - Space ownership and membership.
 - Create, edit, view, and delete memories.
 - Attach photographs to memories.
@@ -49,9 +51,9 @@ These features should only be considered after the core journey works.
 
 The MVP is ready for initial validation when:
 
-1. A user can register and log in.
+1. A user can register, verify their email, and log in.
 2. A user can create a space.
-3. A second user can join through an invitation.
+3. A second user can join through an invitation, by email or shareable link.
 4. Both users can access authorized shared memories.
 5. A memory can contain a photograph, song link, and story.
 6. Members can comment on memories.

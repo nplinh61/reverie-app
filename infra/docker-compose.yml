@@ -16,8 +16,8 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      # host DB_PORT (default 5432) -> container 5432 (fixed internal port)
-      - "${DB_PORT:-5432}:5432"
+      # host DB_PORT (default 5433) -> container 5432 (fixed internal port)
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
     volumes:
       # PostgreSQL 18 keeps its data in a versioned subdirectory, so mount the
       # parent /var/lib/postgresql, not /var/lib/postgresql/data.
@@ -25,6 +25,25 @@ services:
     healthcheck:
       # Runs inside the container, so it targets the internal 5432, not DB_PORT.
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Mailpit: a local SMTP sink for email verification during development (ADR-005).
+  # It accepts mail on 1025 and never forwards it anywhere. Open the web UI on
+  # http://localhost:8025 to read the verification emails the backend sends.
+  # No production provider is configured here; that choice is deferred.
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: reverie-mailpit
+    ports:
+      # host MAIL_PORT (default 1025) -> container 1025 (SMTP)
+      - "${MAIL_PORT:-1025}:1025"
+      # host MAILPIT_UI_PORT (default 8025) -> container 8025 (web UI)
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+    healthcheck:
+      # Mailpit ships a tiny health command used for container orchestration.
+      test: ["CMD", "/mailpit", "readyz"]
       interval: 5s
       timeout: 5s
       retries: 10
