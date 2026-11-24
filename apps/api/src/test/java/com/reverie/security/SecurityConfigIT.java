@@ -30,7 +30,7 @@ import tools.jackson.databind.json.JsonMapper;
  * assuming the configuration is correct.
  *
  * <p>The HTTP calls use the plain JDK {@link HttpClient}, which does not throw on
- * 4xx responses. For the CSRF flow a {@link CookieManager} stores the XSRF-TOKEN
+ * 4xx responses. For the CSRF flow a {@link CookieManager} stores the REVERIE-XSRF-TOKEN
  * cookie issued by the bootstrap endpoint and resends it automatically.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -94,10 +94,10 @@ class SecurityConfigIT {
         assertThat(response.statusCode()).isEqualTo(204);
 
         List<String> setCookies = response.headers().allValues("set-cookie");
-        assertThat(setCookies).anyMatch(cookie -> cookie.startsWith("XSRF-TOKEN="));
+        assertThat(setCookies).anyMatch(cookie -> cookie.startsWith("REVERIE-XSRF-TOKEN="));
         // The cookie must be readable by JavaScript, so HttpOnly must be absent.
         assertThat(setCookies)
-                .filteredOn(cookie -> cookie.startsWith("XSRF-TOKEN="))
+                .filteredOn(cookie -> cookie.startsWith("REVERIE-XSRF-TOKEN="))
                 .allMatch(cookie -> !cookie.toLowerCase().contains("httponly"));
     }
 
@@ -127,14 +127,14 @@ class SecurityConfigIT {
         assertThat(csrf.statusCode()).isEqualTo(204);
 
         String token = cookieManager.getCookieStore().getCookies().stream()
-                .filter(cookie -> cookie.getName().equals("XSRF-TOKEN"))
+                .filter(cookie -> cookie.getName().equals("REVERIE-XSRF-TOKEN"))
                 .map(HttpCookie::getValue)
                 .findFirst()
                 .orElseThrow();
 
         HttpResponse<String> response = client.send(
                 HttpRequest.newBuilder(uri("/api/v1/secure-probe"))
-                        .header("X-XSRF-TOKEN", token)
+                        .header("X-REVERIE-XSRF-TOKEN", token)
                         .POST(BodyPublishers.noBody())
                         .build(),
                 HttpResponse.BodyHandlers.ofString());

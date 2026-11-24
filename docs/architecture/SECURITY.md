@@ -142,15 +142,18 @@ Milestone 1 decisions (see ADR-004):
 
 CSRF initialization and refresh (Milestone 1, cookie sessions, see ADR-003):
 - CSRF uses a cookie token that JavaScript can read and that the client echoes as
-  the X-XSRF-TOKEN header.
+  the X-REVERIE-XSRF-TOKEN header. The cookie and header use project-specific
+  names (REVERIE-XSRF-TOKEN and X-REVERIE-XSRF-TOKEN) instead of the framework
+  default XSRF-TOKEN, so the cookie does not collide with another application on
+  the same host during local development.
 - A dedicated public endpoint, GET /api/v1/auth/csrf, initializes the cookie. It
   requires no authentication and is permitted for anonymous requests.
-- Before login: the client calls GET /api/v1/auth/csrf so the XSRF-TOKEN cookie
-  exists before the first mutating request, including the login POST.
+- Before login: the client calls GET /api/v1/auth/csrf so the REVERIE-XSRF-TOKEN
+  cookie exists before the first mutating request, including the login POST.
 - After login: the session is rotated and a new CSRF token is issued. The login
-  response writes the new XSRF-TOKEN cookie value, and the client uses it for
-  subsequent mutating requests.
-- After logout: the server invalidates the session and clears the XSRF-TOKEN
+  response writes the new REVERIE-XSRF-TOKEN cookie value, and the client uses it
+  for subsequent mutating requests.
+- After logout: the server invalidates the session and clears the REVERIE-XSRF-TOKEN
   cookie. The client calls GET /api/v1/auth/csrf again before the next login.
 - This behavior must be verified by integration tests covering the full flow
   before login, after login, and after logout. It must not be assumed that token

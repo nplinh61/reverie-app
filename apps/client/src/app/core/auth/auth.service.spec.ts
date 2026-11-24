@@ -20,8 +20,8 @@ describe('AuthService', () => {
       providers: [
         provideHttpClient(
           withXsrfConfiguration({
-            cookieName: 'XSRF-TOKEN',
-            headerName: 'X-XSRF-TOKEN',
+            cookieName: 'REVERIE-XSRF-TOKEN',
+            headerName: 'X-REVERIE-XSRF-TOKEN',
           }),
         ),
         provideHttpClientTesting(),

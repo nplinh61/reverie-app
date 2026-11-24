@@ -64,7 +64,8 @@ Login and sessions:
   the server session and clears cookies.
 
 CSRF:
-- CSRF uses a cookie token that the client echoes as the X-XSRF-TOKEN header.
+- CSRF uses a cookie token (REVERIE-XSRF-TOKEN) that the client echoes as the
+  X-REVERIE-XSRF-TOKEN header.
 - The client initializes the cookie with a public GET /auth/csrf before the first
   mutating request, including login. The token is refreshed on login and cleared
   on logout. Initialization and refresh are covered by integration tests (see

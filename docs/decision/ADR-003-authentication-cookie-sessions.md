@@ -37,12 +37,17 @@ Use Spring Security with server-managed, cookie-based sessions.
   only; a username conflict returns a clear field-level validation error.
 - CSRF protection is enabled using a cookie token repository that JavaScript can
   read (CookieCsrfTokenRepository.withHttpOnlyFalse) together with a
-  CsrfTokenRequestAttributeHandler. The web client reads the XSRF-TOKEN cookie and
-  echoes it as the X-XSRF-TOKEN header. A dedicated public endpoint,
+  CsrfTokenRequestAttributeHandler. The cookie and header use project-specific
+  names, REVERIE-XSRF-TOKEN and X-REVERIE-XSRF-TOKEN, rather than the framework
+  default XSRF-TOKEN, so the cookie does not collide with another application that
+  shares the same host during local development (cookies are not isolated by
+  port). The web client reads the REVERIE-XSRF-TOKEN cookie and echoes it as the
+  X-REVERIE-XSRF-TOKEN header. A dedicated public endpoint,
   GET /api/v1/auth/csrf, initializes the cookie and requires no authentication.
   The lifecycle is explicit: before login the client calls GET /auth/csrf so the
-  cookie exists before the first mutating request; after login the response writes
-  the rotated token; after logout the cookie is cleared and the client calls
+  REVERIE-XSRF-TOKEN cookie exists before the first mutating request; after login
+  the response writes the rotated token; after logout the cookie is cleared and
+  the client calls
   GET /auth/csrf again before the next login. This behavior is verified by
   integration tests covering the full flow (see SECURITY.md). The design does not
   assume that token rotation silently writes the cookie.

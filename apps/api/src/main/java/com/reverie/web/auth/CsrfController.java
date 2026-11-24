@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
  * (ADR-003, SECURITY.md section 7).
  *
  * <p>Reading the token value forces Spring Security to generate it and write the
- * XSRF-TOKEN cookie on the response. The token itself is delivered only in the
- * cookie, so the body stays empty and the client echoes the value back as the
- * X-XSRF-TOKEN header on later writes such as registration and login.
+ * REVERIE-XSRF-TOKEN cookie on the response. The token itself is delivered only
+ * in the cookie, so the body stays empty and the client echoes the value back as
+ * the X-REVERIE-XSRF-TOKEN header on later writes such as registration and login.
  *
  * <p>The client calls this again after logout clears the cookie, and refreshes
  * its stored value from the cookie that login rotates. Those login and logout

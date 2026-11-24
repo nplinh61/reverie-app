@@ -288,8 +288,9 @@ deployment. The design addresses:
 - Secure password hashing with BCrypt at cost 12 through a DelegatingPasswordEncoder.
 - A session-scoped JSESSIONID cookie with HttpOnly, SameSite=Lax, and Secure in
   production, and a two-hour inactivity timeout.
-- CSRF protection with a cookie token echoed as an X-XSRF-TOKEN header, with
-  explicit initialization and refresh around login and logout.
+- CSRF protection with a cookie token echoed as an X-REVERIE-XSRF-TOKEN header
+  (project-specific cookie name REVERIE-XSRF-TOKEN), with explicit initialization
+  and refresh around login and logout.
 - Same-origin deployment, so the browser uses first-party cookies and relative
   URLs; cross-origin credentialed requests are not on the normal path.
 - Logout that invalidates the server session and clears cookies.

@@ -5,6 +5,7 @@ import com.reverie.web.error.RestAccessDeniedHandler;
 import com.reverie.web.error.RestAuthenticationEntryPoint;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,9 +35,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
  *
  * <p>Authentication uses cookie sessions, so CSRF protection is enabled for all
  * unsafe methods and is never globally disabled. The CSRF token is stored in a
- * cookie that JavaScript can read (XSRF-TOKEN) and echoed back as the
- * X-XSRF-TOKEN header. The public {@code GET /api/v1/auth/csrf} endpoint issues
- * the cookie before the first mutating request.
+ * cookie that JavaScript can read (REVERIE-XSRF-TOKEN) and echoed back as the
+ * X-REVERIE-XSRF-TOKEN header. The names are project-specific so the cookie
+ * never collides with another app that shares the same host during local
+ * development, because cookies are not isolated by port. The public
+ * {@code GET /api/v1/auth/csrf} endpoint issues the cookie before the first
+ * mutating request.
  */
 @Configuration
 @EnableWebSecurity
@@ -52,12 +56,13 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
             RestAuthenticationEntryPoint authenticationEntryPoint,
-            RestAccessDeniedHandler accessDeniedHandler) throws Exception {
+            RestAccessDeniedHandler accessDeniedHandler,
+            @Value("${server.servlet.session.cookie.name}") String sessionCookieName) throws Exception {
 
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRepository(reverieCsrfTokenRepository())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/v1/ping").permitAll()
@@ -74,6 +79,7 @@ public class SecurityConfig {
                 // 401 JSON body, not a login-page redirect or a browser Basic prompt.
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
+                .logout(logout -> logout.deleteCookies(sessionCookieName))
                 // Wiring the handlers here covers both the ExceptionTranslationFilter
                 // (401 and action 403) and the CsrfFilter, which reads its
                 // access-denied handler from this same configurer, so CSRF failures
@@ -83,6 +89,25 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler));
 
         return http.build();
+    }
+
+    /**
+     * CSRF token repository with project-specific cookie and header names.
+     *
+     * <p>The default {@code XSRF-TOKEN} cookie is shared by every Angular and
+     * Spring Security app on the same host, and cookies are not isolated by port.
+     * Running two such apps on {@code localhost} therefore lets their CSRF cookies
+     * collide, which can make the header and cookie disagree and fail the check.
+     * Naming this cookie {@code REVERIE-XSRF-TOKEN} and its header
+     * {@code X-REVERIE-XSRF-TOKEN} keeps Reverie's token in its own namespace. The
+     * repository stays stateless and HttpOnly-false so the Angular client can read
+     * the cookie and echo it back as the header.
+     */
+    private static CookieCsrfTokenRepository reverieCsrfTokenRepository() {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookieName("REVERIE-XSRF-TOKEN");
+        repository.setHeaderName("X-REVERIE-XSRF-TOKEN");
+        return repository;
     }
 
     /**
@@ -106,15 +131,16 @@ public class SecurityConfig {
      * cross-origin credentialed requests are not supported yet. In development the
      * Angular dev-server proxy (Step 5) makes browser traffic same-origin, and in
      * production a reverse proxy serves the API under one domain, so credentialed
-     * cross-origin requests are not on the normal path. X-XSRF-TOKEN is allowed so
-     * that any permitted cross-origin client can still carry the CSRF token.
+     * cross-origin requests are not on the normal path. X-REVERIE-XSRF-TOKEN is
+     * allowed so that any permitted cross-origin client can still carry the CSRF
+     * token.
      */
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Content-Type", "Authorization", "Accept", "X-XSRF-TOKEN"));
+        configuration.setAllowedHeaders(List.of("Content-Type", "Authorization", "Accept", "X-REVERIE-XSRF-TOKEN"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/v1/**", configuration);

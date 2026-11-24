@@ -16,13 +16,15 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    // XSRF: read the XSRF-TOKEN cookie and echo it as X-XSRF-TOKEN on mutating,
-    // same-origin requests. These are Angular's defaults, stated explicitly so
-    // they stay aligned with Spring Security's cookie and header names (ADR-003).
+    // XSRF: read the REVERIE-XSRF-TOKEN cookie and echo it as X-REVERIE-XSRF-TOKEN
+    // on mutating, same-origin requests. The names are project-specific (not
+    // Angular's XSRF-TOKEN default) so the cookie never collides with another app
+    // sharing the localhost dev host, and they must match Spring Security's
+    // configured cookie and header names (ADR-003, SecurityConfig).
     provideHttpClient(
       withXsrfConfiguration({
-        cookieName: 'XSRF-TOKEN',
-        headerName: 'X-XSRF-TOKEN',
+        cookieName: 'REVERIE-XSRF-TOKEN',
+        headerName: 'X-REVERIE-XSRF-TOKEN',
       }),
     ),
     provideIonicAngular({}),

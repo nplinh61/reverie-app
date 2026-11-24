@@ -254,13 +254,13 @@ class RegistrationIT {
         client.send(HttpRequest.newBuilder(uri("/api/v1/auth/csrf")).GET().build(),
                 HttpResponse.BodyHandlers.ofString());
         String csrfToken = cookieManager.getCookieStore().getCookies().stream()
-                .filter(cookie -> cookie.getName().equals("XSRF-TOKEN"))
+                .filter(cookie -> cookie.getName().equals("REVERIE-XSRF-TOKEN"))
                 .map(HttpCookie::getValue)
                 .findFirst()
                 .orElseThrow();
 
         return client.send(HttpRequest.newBuilder(uri(path))
-                .header("X-XSRF-TOKEN", csrfToken)
+                .header("X-REVERIE-XSRF-TOKEN", csrfToken)
                 .header("Content-Type", "application/json")
                 .POST(BodyPublishers.ofString(json))
                 .build(), HttpResponse.BodyHandlers.ofString());

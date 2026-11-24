@@ -10,10 +10,10 @@ import { MessageResponse, RegisterRequest } from '../../shared/models/auth';
  * knows those URLs, so components never build URLs or call HttpClient directly.
  *
  * <p>Every mutating call first fetches GET /auth/csrf. That response sets the
- * XSRF-TOKEN cookie, which Angular's built-in XSRF support then echoes as the
- * X-XSRF-TOKEN header on the POST. Because apiBaseUrl is empty the requests are
- * relative and same-origin (through the dev proxy), which is what lets the
- * cookie and header line up without CORS.
+ * REVERIE-XSRF-TOKEN cookie, which Angular's built-in XSRF support then echoes as
+ * the X-REVERIE-XSRF-TOKEN header on the POST. Because apiBaseUrl is empty the
+ * requests are relative and same-origin (through the dev proxy), which is what
+ * lets the cookie and header line up without CORS.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
