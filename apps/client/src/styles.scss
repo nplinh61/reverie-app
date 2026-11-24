@@ -1,1 +1,43 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global styles. */
+
+/* Rose-Tinted Dusk authentication theme: self-hosted fonts, palette custom
+ * properties, and the shared .auth-* classes. Imported once here so the shared
+ * styling is emitted a single time and stays off the per-component budget. */
+@use 'app/features/auth/auth-theme';
+
+/*
+ * Form controls need their own text and background colors.
+ *
+ * Ionic's normalize.css sets "input, select, textarea { color: inherit }".
+ * Under the dark palette (theme/variables.css) the inherited text color turns
+ * light, while a native input keeps its white background, so typed text becomes
+ * white on white and disappears. Setting both colors here fixes the contrast in
+ * light and dark themes.
+ *
+ * The "body" prefix raises specificity above normalize.css, which is loaded
+ * after this file, so these rules win regardless of load order. The Ionic theme
+ * variables keep the inputs consistent with the rest of the app, with plain
+ * fallbacks in case a variable is ever missing.
+ */
+body input,
+body select,
+body textarea {
+  color: var(--ion-text-color, #1a1a1a);
+  background-color: var(--ion-background-color, #ffffff);
+}
+
+/* A clear focus ring so keyboard users can see the active field. */
+body input:focus,
+body select:focus,
+body textarea:focus {
+  outline: 2px solid var(--ion-color-primary, #3880ff);
+  outline-offset: 1px;
+}
+
+/* Angular adds ng-invalid and ng-touched once a field has been used and is
+ * invalid. The red border marks the problem field without hiding its text. */
+body input.ng-invalid.ng-touched,
+body select.ng-invalid.ng-touched,
+body textarea.ng-invalid.ng-touched {
+  border-color: var(--ion-color-danger, #c5000f);
+}

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+  <circle cx="32" cy="32" r="30" fill="#5a425c" />
+  <circle cx="32" cy="32" r="22" fill="none" stroke="#6e536f" stroke-width="1.4" />
+  <circle cx="32" cy="32" r="16" fill="none" stroke="#6e536f" stroke-width="1.4" />
+  <circle cx="32" cy="32" r="9" fill="#d9b4d4" />
+  <circle cx="32" cy="32" r="2.4" fill="#5a425c" />
+</svg>

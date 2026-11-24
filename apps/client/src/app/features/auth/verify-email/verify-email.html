@@ -1,23 +1,32 @@
-<div class="auth-page">
-  <section class="auth-card" aria-live="polite">
-    @if (state() === 'verifying') {
-      <h1>Verifying your email...</h1>
-      <p>Please wait while we confirm your verification link.</p>
-    } @else if (state() === 'success') {
-      <h1>Email verified</h1>
-      <p class="status-ok">{{ message() }}</p>
-      <a routerLink="/">Back to home</a>
-    } @else if (state() === 'missing') {
-      <h1>Missing verification token</h1>
-      <p class="status-error">
-        This link is incomplete. Please open the verification link directly from
-        your email.
-      </p>
-      <a routerLink="/register">Back to sign up</a>
-    } @else {
-      <h1>Verification failed</h1>
-      <p class="status-error">{{ message() }}</p>
-      <a routerLink="/register">Back to sign up</a>
-    }
-  </section>
-</div>
+<app-verification-card>
+  @if (state() === 'verifying') {
+    <h1 class="auth-title">Confirming your link</h1>
+    <p class="auth-lead">
+      One gentle moment while we confirm your verification link.
+    </p>
+    <span class="verify-spinner" role="status" aria-label="Verifying"></span>
+  } @else if (state() === 'success') {
+    <h1 class="auth-title">You're all set</h1>
+    <p class="auth-lead status-success">{{ message() }}</p>
+    <p class="auth-footnote">
+      Your Reverie account is verified. You can close this page and return to the
+      app whenever you're ready to start collecting memories.
+    </p>
+    <a class="auth-back" routerLink="/register">&#8592; Back to Reverie</a>
+  } @else if (state() === 'missing') {
+    <h1 class="auth-title">This link looks incomplete</h1>
+    <p class="auth-lead">
+      The verification link is missing its code. Please open the link directly
+      from the email we sent you.
+    </p>
+    <a class="auth-back" routerLink="/register">&#8592; Back to Reverie</a>
+  } @else {
+    <h1 class="auth-title">This link has faded</h1>
+    <p class="auth-lead status-error">{{ message() }}</p>
+    <p class="auth-footnote">
+      Verification links expire after 24 hours and can be used only once. Sign up
+      again to receive a fresh link.
+    </p>
+    <a class="auth-back" routerLink="/register">&#8592; Back to Reverie</a>
+  }
+</app-verification-card>

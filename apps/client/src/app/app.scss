@@ -1,0 +1,9 @@
+/* The auth routes paint their own full-bleed background, so the shell content
+ * adds no padding of its own. */
+.rev-shell-content {
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --background: var(--rev-mist, #fff3f2);
+}

@@ -1,0 +1,10 @@
+/* Layout only; palette and card styling come from the shared auth theme. */
+.auth-surface--centered {
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+}
+
+.verification-card__body {
+  margin-top: 1.25rem;
+}

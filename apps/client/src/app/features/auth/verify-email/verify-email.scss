@@ -1,23 +1,30 @@
-.auth-page {
-  display: flex;
-  justify-content: center;
-  padding: 1.5rem 1rem;
+/* Layout only; the card, palette and fonts come from the shared auth theme. */
+.auth-lead.status-success {
+  color: var(--rev-success);
 }
 
-.auth-card {
-  width: 100%;
-  max-width: 28rem;
+.auth-lead.status-error {
+  color: var(--rev-danger);
+}
 
-  h1 {
-    margin-top: 0;
-    font-size: 1.5rem;
+.verify-spinner {
+  display: inline-block;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 3px solid var(--rev-orchid);
+  border-top-color: var(--rev-mauve-deep);
+  border-radius: 50%;
+  animation: verify-spin 0.9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .verify-spinner {
+    animation-duration: 2.4s;
   }
 }
 
-.status-error {
-  color: var(--ion-color-danger, #c5000f);
-}
-
-.status-ok {
-  color: var(--ion-color-success, #2da44e);
+@keyframes verify-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

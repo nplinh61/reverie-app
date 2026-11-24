@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { VerificationCard } from '../../../shared/components/verification-card/verification-card';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ApiError } from '../../../shared/models/auth';
 
@@ -13,7 +14,7 @@ type VerifyState = 'verifying' | 'success' | 'error' | 'missing';
  */
 @Component({
   selector: 'app-verify-email',
-  imports: [RouterLink],
+  imports: [RouterLink, VerificationCard],
   templateUrl: './verify-email.html',
   styleUrl: './verify-email.scss',
 })

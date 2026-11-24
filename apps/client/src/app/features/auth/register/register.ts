@@ -5,12 +5,40 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ReverieWordmark } from '../../../shared/components/reverie-wordmark/reverie-wordmark';
+import { VerificationCard } from '../../../shared/components/verification-card/verification-card';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ApiError, RegisterRequest } from '../../../shared/models/auth';
 
 type RegisterState = 'idle' | 'submitting' | 'success' | 'error';
 type ResendState = 'idle' | 'sending' | 'sent' | 'error';
+
+/**
+ * A decorative polaroid in the desktop storytelling panel. The image slot is a
+ * local file name under public/auth/polaroids; while no file is present the
+ * template shows a gradient placeholder and never requests a missing image.
+ * See public/auth/polaroids/README.md for how to add licensed photography.
+ */
+interface Polaroid {
+  readonly caption: string;
+  readonly tone: 'sunset' | 'bloom' | 'stage';
+  readonly rotation: string;
+  /**
+   * Optional photograph file name under public/auth/polaroids. While it is
+   * undefined the template shows the gradient placeholder and requests no image,
+   * so there is never a broken-image icon. The frame uses a fixed aspect ratio
+   * and object-fit: cover, so adding a photo needs no layout change.
+   */
+  readonly image?: string;
+  /** Intrinsic pixel size of the photo, used to reserve space and avoid shift. */
+  readonly width?: number;
+  readonly height?: number;
+  /**
+   * Per-photo object-position for the cover crop, so each subject stays in frame.
+   * Defaults to center when omitted.
+   */
+  readonly objectPosition?: string;
+}
 
 /**
  * Registration screen. It mirrors the backend validation rules for quick
@@ -21,7 +49,7 @@ type ResendState = 'idle' | 'sending' | 'sent' | 'error';
  */
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, ReverieWordmark, VerificationCard],
   templateUrl: './register.html',
   styleUrl: './register.scss',
 })
@@ -34,6 +62,38 @@ export class Register {
   protected readonly generalError = signal<string | null>(null);
   protected readonly fieldErrors = signal<Record<string, string>>({});
   protected readonly submittedEmail = signal<string>('');
+  protected readonly passwordVisible = signal<boolean>(false);
+
+  /** Decorative polaroids for the desktop storytelling panel. */
+  protected readonly polaroids: readonly Polaroid[] = [
+    {
+      caption: "the days we'd replay ♡",
+      tone: 'sunset',
+      rotation: '4deg',
+      image: 'friends-mirror.webp',
+      width: 1000,
+      height: 667,
+      objectPosition: 'center',
+    },
+    {
+      caption: 'little things, lovely days ✿',
+      tone: 'bloom',
+      rotation: '-6deg',
+      image: 'cherry-blossoms.webp',
+      width: 750,
+      height: 1000,
+      objectPosition: 'center',
+    },
+    {
+      caption: 'wish you were here ♡',
+      tone: 'stage',
+      rotation: '3deg',
+      image: 'ferris-wheel.webp',
+      width: 667,
+      height: 1000,
+      objectPosition: '50% 40%',
+    },
+  ];
 
   protected readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
@@ -82,6 +142,23 @@ export class Register {
 
   protected fieldError(field: string): string | undefined {
     return this.fieldErrors()[field];
+  }
+
+  protected togglePassword(): void {
+    this.passwordVisible.update((visible) => !visible);
+  }
+
+  /**
+   * Returns from the "check your email" view to the registration form. The view
+   * is rendered by the /register route itself, so routing to /register would be a
+   * no-op; instead we reset the local view state. The typed form values are kept
+   * so the person can adjust and resubmit if needed.
+   */
+  protected backToForm(): void {
+    this.state.set('idle');
+    this.resendState.set('idle');
+    this.generalError.set(null);
+    this.fieldErrors.set({});
   }
 
   private applyError(error: HttpErrorResponse): void {

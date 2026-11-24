@@ -1,13 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { VerifyEmail } from './verify-email';
 import { AuthService } from '../../../core/auth/auth.service';
 
 describe('VerifyEmail', () => {
   function setup(token: string | null, authMock: Partial<AuthService>) {
+    // Reset first so setup can be called more than once within a single test.
+    TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [VerifyEmail],
       providers: [
@@ -30,6 +32,17 @@ describe('VerifyEmail', () => {
 
     expect(verifyEmail).not.toHaveBeenCalled();
     expect(component.state()).toBe('missing');
+  });
+
+  it('shows the loading state while verification is in flight', () => {
+    const verifyEmail = vi.fn().mockReturnValue(NEVER);
+    const { fixture, component } = setup('raw-token', {
+      verifyEmail,
+    } as unknown as AuthService);
+
+    expect(component.state()).toBe('verifying');
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.verify-spinner')).not.toBeNull();
   });
 
   it('shows success when the token is accepted', () => {
@@ -56,5 +69,36 @@ describe('VerifyEmail', () => {
 
     expect(component.state()).toBe('error');
     expect(component.message()).toContain('invalid or has expired');
+  });
+
+  it('offers Back to Reverie navigation to /register on resolved states', () => {
+    const cases: Array<[string | null, Partial<AuthService>]> = [
+      ['raw-token', { verifyEmail: vi.fn().mockReturnValue(of({ message: 'Verified.' })) }], // success
+      [null, { verifyEmail: vi.fn() }], // missing token
+      [
+        'bad-token',
+        {
+          verifyEmail: vi
+            .fn()
+            .mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400, error: null }))),
+        },
+      ], // error
+    ];
+
+    for (const [token, authMock] of cases) {
+      const { fixture } = setup(token, authMock as AuthService);
+      const el = fixture.nativeElement as HTMLElement;
+      const back = el.querySelector('.auth-back') as HTMLAnchorElement | null;
+      expect(back?.textContent).toContain('Back to Reverie');
+      expect(back?.getAttribute('href')).toBe('/register');
+    }
+  });
+
+  it('shows no navigation link while verification is in flight', () => {
+    const { fixture } = setup('raw-token', {
+      verifyEmail: vi.fn().mockReturnValue(NEVER),
+    } as unknown as AuthService);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.auth-back')).toBeNull();
   });
 });

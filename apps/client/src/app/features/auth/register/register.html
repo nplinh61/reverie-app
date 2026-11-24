@@ -1,93 +1,220 @@
-<div class="auth-page">
-  @if (state() === 'success') {
-    <section class="auth-card" aria-live="polite">
-      <h1>Check your email</h1>
-      <p>
-        If the details are valid, we have sent a verification link to
-        <strong>{{ submittedEmail() }}</strong>. Open it to finish creating your
-        Reverie account. The link expires in 24 hours.
+@if (state() === 'success') {
+  <app-verification-card>
+    <h1 class="auth-title">Check your email</h1>
+    <p class="auth-lead">
+      We have tucked a verification link into an email to
+      <strong>{{ submittedEmail() }}</strong>. Open it to finish creating your
+      Reverie account and start collecting the moments that matter.
+    </p>
+    <p class="auth-hint">If the details are valid, your link arrives shortly and expires in 24 hours.</p>
+
+    @if (resendState() === 'sent') {
+      <p class="auth-status-ok">Another verification email is on its way.</p>
+    } @else if (resendState() === 'error') {
+      <p class="auth-status-error">
+        We could not resend the email just now. Please try again shortly.
       </p>
+    }
 
-      @if (resendState() === 'sent') {
-        <p class="status-ok">Another verification email is on its way.</p>
-      } @else if (resendState() === 'error') {
-        <p class="status-error">
-          We could not resend the email just now. Please try again shortly.
-        </p>
-      }
+    <button
+      type="button"
+      class="auth-btn-secondary"
+      (click)="resend()"
+      [disabled]="resendState() === 'sending'"
+    >
+      {{ resendState() === 'sending' ? 'Resending...' : 'Resend email' }}
+    </button>
 
-      <button
-        type="button"
-        class="secondary"
-        (click)="resend()"
-        [disabled]="resendState() === 'sending'"
-      >
-        {{ resendState() === 'sending' ? 'Resending...' : 'Resend email' }}
+    <div>
+      <button type="button" class="auth-back" (click)="backToForm()">
+        &#8592; Back to Reverie
       </button>
-    </section>
-  } @else {
-    <section class="auth-card">
-      <h1>Create your Reverie account</h1>
+    </div>
+  </app-verification-card>
+} @else {
+  <div class="auth-surface register">
+    <!-- Desktop storytelling panel (>= 62rem). The copy sits in its own block
+         above the collage region, so decorative elements can never overlap the
+         heading or description. -->
+    <aside class="register__story" aria-hidden="true">
+      <div class="register__story-copy">
+        <h2 class="register__story-title">A little corner of your world.</h2>
+        <p class="register__story-sub">
+          For everything you hold close, and everyone who makes your days worth
+          remembering.
+        </p>
+      </div>
 
-      @if (generalError()) {
-        <p class="status-error" role="alert">{{ generalError() }}</p>
-      }
+      <div class="register__collage">
+        @for (polaroid of polaroids; track polaroid.caption; let i = $index) {
+          <figure
+            class="polaroid"
+            [class]="'polaroid--' + (i + 1)"
+            [style.--rot]="polaroid.rotation"
+          >
+            <span class="polaroid__tape"></span>
+            <span class="polaroid__photo" [class]="'polaroid__photo--' + polaroid.tone">
+              @if (polaroid.image) {
+                <img
+                  class="polaroid__img"
+                  [src]="'auth/polaroids/' + polaroid.image"
+                  [width]="polaroid.width"
+                  [height]="polaroid.height"
+                  [style.object-position]="polaroid.objectPosition"
+                  loading="lazy"
+                  decoding="async"
+                  alt=""
+                />
+              }
+            </span>
+            <figcaption class="polaroid__caption">{{ polaroid.caption }}</figcaption>
+          </figure>
+        }
 
-      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        <label>
-          <span>Email</span>
-          <input type="email" formControlName="email" autocomplete="email" />
-          @if (form.controls.email.touched && form.controls.email.invalid) {
-            <small class="status-error">Enter a valid email address.</small>
-          }
-          @if (fieldError('email')) {
-            <small class="status-error">{{ fieldError('email') }}</small>
-          }
-        </label>
+        <img class="doodle doodle--headphones" src="auth/decorations/headphones.svg" alt="" />
+        <img class="doodle doodle--notes" src="auth/decorations/music-notes.svg" alt="" />
+        <img class="doodle doodle--cassette" src="auth/decorations/cassette.svg" alt="" />
+        <img class="doodle doodle--lavender" src="auth/decorations/lavender.svg" alt="" />
+        <img class="doodle doodle--sparkle-a" src="auth/decorations/sparkle.svg" alt="" />
+        <img class="doodle doodle--sparkle-b" src="auth/decorations/sparkle.svg" alt="" />
+      </div>
+    </aside>
 
-        <label>
-          <span>Display name</span>
-          <input type="text" formControlName="displayName" autocomplete="name" />
-          @if (form.controls.displayName.touched && form.controls.displayName.invalid) {
-            <small class="status-error">Enter a display name (up to 100 characters).</small>
-          }
-          @if (fieldError('displayName')) {
-            <small class="status-error">{{ fieldError('displayName') }}</small>
-          }
-        </label>
+    <!-- Registration form panel. -->
+    <main class="register__form-panel">
+      <!-- Decorative banner, shown below 62rem in place of the side panel.
+           Compact under 48rem, wider between 48rem and 62rem. -->
+      <div class="register__banner" aria-hidden="true">
+        <figure class="polaroid polaroid--banner" style="--rot: -5deg">
+          <span class="polaroid__tape"></span>
+          <span class="polaroid__photo polaroid__photo--sunset"></span>
+          <figcaption class="polaroid__caption">that summer <span>&#9825;</span></figcaption>
+        </figure>
+        <img class="doodle doodle--banner-flowers" src="auth/decorations/babys-breath.svg" alt="" />
+        <img class="doodle doodle--banner-vinyl" src="auth/decorations/vinyl.svg" alt="" />
+        <img class="doodle doodle--banner-notes" src="auth/decorations/music-notes.svg" alt="" />
+        <img class="doodle doodle--banner-headphones" src="auth/decorations/headphones.svg" alt="" />
+      </div>
 
-        <label>
-          <span>Username</span>
-          <input type="text" formControlName="username" autocomplete="username" />
-          @if (form.controls.username.touched && form.controls.username.invalid) {
-            <small class="status-error">
-              3 to 30 characters: lowercase letters, digits, and underscores.
-            </small>
-          }
-          @if (fieldError('username')) {
-            <small class="status-error">{{ fieldError('username') }}</small>
-          }
-        </label>
+      <div class="register__form-inner">
+        <app-reverie-wordmark />
+        <h1 class="auth-title">Your story starts here.</h1>
+        <p class="auth-subtitle">
+          Create an account and begin collecting the moments that matter.
+        </p>
 
-        <label>
-          <span>Password</span>
-          <input type="password" formControlName="password" autocomplete="new-password" />
-          @if (form.controls.password.touched && form.controls.password.invalid) {
-            <small class="status-error">Use at least 10 characters.</small>
-          }
-          @if (fieldError('password')) {
-            <small class="status-error">{{ fieldError('password') }}</small>
-          }
-        </label>
+        @if (generalError()) {
+          <p class="auth-status-error" role="alert">{{ generalError() }}</p>
+        }
 
-        <button type="submit" [disabled]="state() === 'submitting'">
-          {{ state() === 'submitting' ? 'Creating account...' : 'Create account' }}
-        </button>
-      </form>
+        <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="auth-field">
+            <label class="auth-label" for="email">Email address</label>
+            <div class="auth-input-wrap">
+              <input
+                id="email"
+                class="auth-input"
+                type="email"
+                formControlName="email"
+                autocomplete="email"
+                placeholder="you@example.com"
+              />
+            </div>
+            @if (form.controls.email.touched && form.controls.email.invalid) {
+              <small class="auth-status-error">Enter a valid email address.</small>
+            }
+            @if (fieldError('email')) {
+              <small class="auth-status-error">{{ fieldError('email') }}</small>
+            }
+          </div>
 
-      <p class="auth-footer">
-        Already verified? <a routerLink="/">Back to home</a>
-      </p>
-    </section>
-  }
-</div>
+          <div class="auth-field">
+            <label class="auth-label" for="displayName">Name</label>
+            <div class="auth-input-wrap">
+              <input
+                id="displayName"
+                class="auth-input"
+                type="text"
+                formControlName="displayName"
+                autocomplete="name"
+                placeholder="Your name"
+              />
+            </div>
+            @if (form.controls.displayName.touched && form.controls.displayName.invalid) {
+              <small class="auth-status-error">Enter a display name (up to 100 characters).</small>
+            }
+            @if (fieldError('displayName')) {
+              <small class="auth-status-error">{{ fieldError('displayName') }}</small>
+            }
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-label" for="username">Username</label>
+            <div class="auth-input-wrap">
+              <input
+                id="username"
+                class="auth-input"
+                type="text"
+                formControlName="username"
+                autocomplete="username"
+                placeholder="your_username"
+              />
+            </div>
+            @if (form.controls.username.touched && form.controls.username.invalid) {
+              <small class="auth-status-error">
+                3 to 30 characters: lowercase letters, digits, and underscores.
+              </small>
+            }
+            @if (fieldError('username')) {
+              <small class="auth-status-error">{{ fieldError('username') }}</small>
+            }
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-label" for="password">Password</label>
+            <div class="auth-input-wrap">
+              <input
+                id="password"
+                class="auth-input auth-input--with-affix"
+                [type]="passwordVisible() ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="new-password"
+                placeholder="Create a password"
+              />
+              <button
+                type="button"
+                class="auth-affix-btn"
+                (click)="togglePassword()"
+                [attr.aria-pressed]="passwordVisible()"
+                [attr.aria-label]="passwordVisible() ? 'Hide password' : 'Show password'"
+              >
+                @if (passwordVisible()) {
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+                    <path d="M3 3l18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    <path d="M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 9 6 9 6a15 15 0 0 1-2.4 3.1M6.4 7.9A15 15 0 0 0 3 12s3 6 9 6a9.6 9.6 0 0 0 3.3-.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+                    <path d="M3 12s3-6 9-6 9 6 9 6-3 6-9 6-9-6-9-6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+                    <circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="2" />
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (form.controls.password.touched && form.controls.password.invalid) {
+              <small class="auth-status-error">Use at least 10 characters.</small>
+            }
+            @if (fieldError('password')) {
+              <small class="auth-status-error">{{ fieldError('password') }}</small>
+            }
+            <small class="auth-hint">At least 10 characters. Choose something only you would know.</small>
+          </div>
+
+          <button type="submit" class="auth-btn-primary" [disabled]="state() === 'submitting'">
+            {{ state() === 'submitting' ? 'Creating your account...' : 'Create my account' }}
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+}
