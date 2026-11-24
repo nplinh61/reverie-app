@@ -19,7 +19,7 @@ spring:
     # Host-side connection. The app runs natively on Windows and reaches
     # PostgreSQL through the port Docker publishes on the host (DB_PORT).
     # PostgreSQL itself always listens on 5432 inside the container.
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:reverie}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:reverie}
     username: ${DB_USER:reverie}
     # No default on purpose: startup fails fast if DB_PASSWORD is not supplied
     # through the environment. The example value lives only in .env.example and
@@ -63,7 +63,7 @@ management:
 reverie:
   cors:
     allowed-origins:
-      - http://localhost:4200
+      - http://localhost:4201
   # Email verification settings (ADR-005). from-address is the sender shown on
   # verification and account-notice emails. base-url is the public origin the
   # browser uses; the verification link is built as {base-url}/verify-email?token=...
@@ -72,7 +72,7 @@ reverie:
     from-address: ${MAIL_FROM:no-reply@reverie.local}
     from-name: ${MAIL_FROM_NAME:Reverie}
   verification:
-    base-url: ${APP_BASE_URL:http://localhost:4200}
+    base-url: ${APP_BASE_URL:http://localhost:4201}
     # How long a verification token stays valid, and the smallest gap between two
     # verification emails to the same account (the persistent resend cooldown).
     token-validity: 24h

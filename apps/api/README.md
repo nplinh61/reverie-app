@@ -22,7 +22,7 @@ The backend provides:
 
 - `GET /api/v1/ping` returns `{"status":"ok"}`. It does not touch the database.
 - `GET /actuator/health` returns the health status only, with no details.
-- A CORS policy that allows exactly `http://localhost:4200` for `/api/v1/**`.
+- A CORS policy that allows exactly `http://localhost:4201` for `/api/v1/**`.
 - An environment-driven PostgreSQL datasource.
 - A fail-fast check: `DB_PASSWORD` is required at startup and has no default. When
   it is missing or blank, the application stops with a clear message.
@@ -66,7 +66,9 @@ noted. The backend runs natively on the host; only PostgreSQL runs in Docker.
    .\mvnw.cmd spring-boot:run
    ```
 
-   The application listens on its default port 8080. Check connectivity:
+   The application listens on port 8080, and the local PostgreSQL container publishes port 5433.
+For browser authentication, the session cookie is `REVERIE-SESSION`. Angular reads
+`REVERIE-XSRF-TOKEN` and sends it as `X-REVERIE-XSRF-TOKEN`. Check connectivity:
 
    ```powershell
    curl http://localhost:8080/api/v1/ping

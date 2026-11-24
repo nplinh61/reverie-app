@@ -102,11 +102,11 @@ class ReverieApplicationIT {
 
     @Test
     void corsAllowsConfiguredOrigin() throws Exception {
-        HttpResponse<String> response = get("/api/v1/ping", "http://localhost:4200");
+        HttpResponse<String> response = get("/api/v1/ping", "http://localhost:4201");
 
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.headers().firstValue("Access-Control-Allow-Origin"))
-                .contains("http://localhost:4200");
+                .contains("http://localhost:4201");
     }
 
     @Test

@@ -16,8 +16,8 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      # host DB_PORT (default 5432) -> container 5432 (fixed internal port)
-      - "${DB_PORT:-5432}:5432"
+      # host DB_PORT (default 5433) -> container 5432 (fixed internal port)
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
     volumes:
       # PostgreSQL 18 keeps its data in a versioned subdirectory, so mount the
       # parent /var/lib/postgresql, not /var/lib/postgresql/data.
